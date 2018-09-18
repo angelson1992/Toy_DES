@@ -420,7 +420,7 @@ public class Main {
     public static void main(String[] args) {
 
         DES blockCypher = new DES("0101000100");
-        int cyphertext = blockCypher.encryptAndDecrypt(Byte.valueOf("101011",2), true);
+        int cyphertext = blockCypher.encryptAndDecrypt(Byte.valueOf("001100",2), true);
         blockCypher.encryptAndDecrypt(cyphertext, false);
 
         if(false) {
