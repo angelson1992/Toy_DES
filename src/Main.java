@@ -342,7 +342,7 @@ class DES {
 
     }
 
-    public int encryptAndDecrypt(int input, boolean isEncryptionMode){
+    public Byte encryptAndDecrypt(Byte input, boolean isEncryptionMode){
 
         if(verboseTest && isEncryptionMode){System.out.println("Encryption has begun.");}
         if(verboseTest && !isEncryptionMode){System.out.println("Decryption has begun.");}
@@ -398,7 +398,8 @@ class DES {
             }
         }
 
-        int byteAnswer = Integer.parseInt(answerString, 2);
+        System.out.println(answerString);
+        Byte byteAnswer = Byte.valueOf(answerString, 2);
 
         if(verboseTest && isEncryptionMode){
             System.out.println("Encryption was used on input " + input + "\n" +
@@ -419,7 +420,7 @@ public class Main {
     public static void main(String[] args) {
 
         DES blockCypher = new DES("0101000100");
-        int cyphertext = blockCypher.encryptAndDecrypt(Byte.valueOf("011111",2), true);
+        Byte cyphertext = blockCypher.encryptAndDecrypt(Byte.valueOf("101011",2), true);
         blockCypher.encryptAndDecrypt(cyphertext, false);
 
         if(false) {
