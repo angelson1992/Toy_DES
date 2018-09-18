@@ -1,20 +1,14 @@
+import javafx.util.Pair;
+
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 class DES {
 
     private boolean verboseTest = true;
-    private BitSet key;
-    private int keySize;
+    private BitSet key = new BitSet();
     private BitSet subKey1;
     private BitSet subKey2;
-    private int inputSize;
-    private Integer[] table = {2, 6, 3, 1, 4, 8, 5, 7};
-    private List<Integer> initialPermutation = Arrays.asList(table);
-    private List<Integer> inversePermutation;
     private int[][] sBox1 = {{1, 0, 3, 2},
                              {3, 2, 1, 0},
                              {0, 2, 1, 3},
@@ -24,21 +18,33 @@ class DES {
                              {3, 0, 1, 0},
                              {2, 1, 0, 3}};
 
-    DES(BitSet keyParam, int keySizeParam){
-        key = keyParam;
-        keySize = keySizeParam;
+    DES(String keyParam){
+
+        //Inputs the string representation of the binary key into the BitSet key variable
+        for(int i = 0; i < keyParam.length(); i++){
+            if(keyParam.charAt(i) == '1') {key.set(i, true);} else {key.set(i, false);}
+        }
+
+        //Sets up the subkeys
         keySchedule();
+
     }
 
     public BitSet permutation(BitSet inputBits, List<Integer> permutationTable){
 
         BitSet answer = new BitSet(permutationTable.size());
 
+//        for(int i = 0; i < permutationTable.size(); i++){
+//
+//            //Set the permutationTable[ith] number of the answer bitset to the inputBit[ith] value
+//            //Because permutationTables count from 1 instead of from 0, permutationTable has a -1 to work with
+//            answer.set(permutationTable.get(i)-1, inputBits.get(i));
+//
+//        }
+
         for(int i = 0; i < permutationTable.size(); i++){
 
-            //Set the permutationTable[ith] number of the answer bitset to the inputBit[ith] value
-            //Because permutationTables count from 1 instead of from 0, permutationTable has a -1 to work with
-            answer.set(permutationTable.get(i)-1, inputBits.get(i));
+            answer.set(i, inputBits.get(permutationTable.get(i)-1));
 
         }
 
@@ -53,6 +59,28 @@ class DES {
         return answer;
 
     }
+
+//    public BitSet expansionPermutation(BitSet inputBits, List<Integer> permutationTable){
+//
+//        BitSet answer = new BitSet();
+//
+//        for(int i = 0; i < permutationTable.size(); i++){
+//
+//            answer.set(i, inputBits.get(permutationTable.get(i)));
+//
+//        }
+//
+//        if(verboseTest){
+//            System.out.println("Expansion Permutation has begun.\n" +
+//              "We are Expansion permuting the input " + inputBits + "\n" +
+//              "by using the table " + permutationTable + "\n" +
+//              "and the result is " + answer + "\n" +
+//              "Expansion Permutation has ended.\n\n");
+//        }
+//
+//        return answer;
+//
+//    }
 
     //This is just a utility function to get integers from binary
     public int BitsToInt(BitSet input, int size){
@@ -78,6 +106,19 @@ class DES {
 
         return Integer.parseInt(binaryString, 2);
 
+    }
+
+    String TwoDMatrixPrint(int[][] matrix){
+
+        String toBeprinted = "";
+        for(int i = 0; i < matrix.length; i++){
+            for(int j = 0; j < matrix[i].length; j++){
+                toBeprinted = toBeprinted + matrix[i][j] + ", ";
+            }
+            toBeprinted = toBeprinted + "\n";
+        }
+
+        return toBeprinted;
     }
 
     //This method simulates the leftward bitshift on BitSets
@@ -183,7 +224,65 @@ class DES {
         return answer;
     }
 
+    //Just some abstraction put around the xor function for the sake of style consistency and testing
+    public BitSet XOR(BitSet left, BitSet right){
+
+        BitSet answer = (BitSet) left.clone();
+        answer.xor(right);
+
+        if(verboseTest){
+            System.out.println("XOR has been called.\n" +
+                               "The inputs are " + left + " and " + right + "\n" +
+                               "And the answer is " + answer + "\n\n");
+        }
+
+        return answer;
+
+    }
+
+    public BitSet sBoxFunction(BitSet input, int[][] matrix){
+
+        String row = "";
+        String col = "";
+
+        //Grabbing the row and col values as strings of the 1s and 0s values
+        if (input.get(0) == true) {row = row + "1";} else {row = row + "0";}
+        if (input.get(3) == true) {row = row + "1";} else {row = row + "0";}
+        if (input.get(1) == true) {col = col + "1";} else {col = col + "0";}
+        if (input.get(2) == true) {col = col + "1";} else {col = col + "0";}
+
+        //Converting the strings of 1s and 0s to integers
+        int rowVal = Integer.parseInt(row, 2);
+        int colVal = Integer.parseInt(col, 2);
+
+        //doing the sBox function and converting the result to a string for convenience
+        int sBoxValue = matrix[rowVal][colVal];
+        String sBoxString = Integer.toBinaryString(sBoxValue);
+
+        //Converting the convenient string into a more convenient BitSet
+        BitSet answer = new BitSet();
+        for(int i = 0; i < sBoxString.length(); i++){
+            if(sBoxString.charAt(i) == '1'){
+                answer.set(i, true);
+            }else{
+                answer.set(i, false);
+            }
+        }
+
+        if(verboseTest){
+            System.out.println("The sBoxFunction as been called.\n" +
+                               "on the input " + input + " and the matrix of \n" + TwoDMatrixPrint(matrix) + "\n" +
+                               "the value picked was " + sBoxValue + " aka " + sBoxString + "\n" +
+                               "and the answer is " + answer + "\n\n");
+        }
+
+        return answer;
+
+    }
+
     public BitSet fFunctionBox(BitSet input, BitSet key){
+
+        if(verboseTest){System.out.println("fFunctionBox has been called on input " + input + " and key " + key + ".");}
 
         //Expansion permutation representation
         Integer[] FourToEightBitPermutation = {4, 1, 2, 3, 2, 3, 4, 1};
@@ -192,11 +291,125 @@ class DES {
         //Use of expansion permutation
         BitSet P4to8Block = permutation(input, FourEightPerm);
 
-        //TODO Finish this function
-        return new BitSet();
+        //XOR P4to8 and a subkey
+        BitSet toBeSplit = XOR(P4to8Block, key);
+
+        //Splitting in half
+        BitSet left = toBeSplit.get(0, 4);
+        BitSet right = toBeSplit.get(4, 8);
+
+        //Using the sBoxes
+        BitSet sBoxResultsLeft = sBoxFunction(left, sBox1);
+        BitSet sBoxResultsRight = sBoxFunction(right, sBox2);
+
+        //Merging the sBox outputs back together
+        BitSet sBoxResultsAll = append(sBoxResultsLeft, 2, sBoxResultsRight, 2);
+
+        //Four bit permutation representation
+        Integer[] FourBitPermutation = {2, 4, 3, 1};
+        List<Integer> FourPerm = Arrays.asList(FourBitPermutation);
+
+        BitSet answer = permutation(sBoxResultsAll, FourPerm);
+
+        if(verboseTest){
+            System.out.println("fBoxFunction input was " + input + "\n" +
+                               "And the given subkey was " + key + "\n" +
+                               "With a final result of " + answer + "\n\n");
+        }
+
+        return answer;
 
     }
 
+    public List<BitSet> fiestelRound(BitSet left, BitSet right, BitSet subkey){
+
+        if(verboseTest){System.out.println("A fiestel round has begun on left " + left + " and right " + right + " with subkey" + subkey + "\n");}
+
+        ArrayList<BitSet> answer = new ArrayList();
+
+        //Calling fFunction on the right half
+        BitSet modifiedRight = fFunctionBox(right, subkey);
+
+        //XORing the left half and the fFunctioned right half
+        BitSet newLeft = XOR(left, modifiedRight);
+
+        answer.add(0, newLeft);
+        answer.add(1, right);
+
+        if(verboseTest){System.out.println("A fiestel round has ended and the answer was " + answer + "\n\n");}
+
+        return answer;
+
+    }
+
+    public int encryptAndDecrypt(int input, boolean isEncryptionMode){
+
+        if(verboseTest && isEncryptionMode){System.out.println("Encryption has begun.");}
+        if(verboseTest && !isEncryptionMode){System.out.println("Decryption has begun.");}
+
+        //Tranforming the Byte input into a BitSet input for conveniences sake
+        BitSet inputBitSet = new BitSet();
+        String inputString = Integer.toBinaryString(input);
+        for(int i = 0; i < inputString.length(); i++){
+            if(inputString.charAt(i)=='1'){inputBitSet.set(i, true);}else{inputBitSet.set(i, false);}
+        }
+
+        //Initial permutation table representation
+        Integer[] initialPermutation = {2, 6, 3, 1, 4, 8, 5, 7};
+        List<Integer> initPerm = Arrays.asList(initialPermutation);
+
+        //Doing initial permutation
+        BitSet permutedInputBits = permutation(inputBitSet, initPerm);
+
+        List<BitSet> roundTwoResults;
+        if(isEncryptionMode) {
+            //The first fiestelRound for encryption
+            List<BitSet> roundOneResults = fiestelRound(permutedInputBits.get(0, 4), permutedInputBits.get(4, 8), subKey1);
+
+            //The second fiestelRound with switch the switched sides for encryption
+            roundTwoResults = fiestelRound(roundOneResults.get(1), roundOneResults.get(0), subKey2);
+        }else{
+            //The first fiestelRound for decryption
+            List<BitSet> roundOneResults = fiestelRound(permutedInputBits.get(0, 4), permutedInputBits.get(4, 8), subKey2);
+
+            //The second fiestelRound with switch the switched sides for decryption
+            roundTwoResults = fiestelRound(roundOneResults.get(1), roundOneResults.get(0), subKey1);
+        }
+
+        //Combining the results together
+        BitSet toBeInversePermuted = append(roundTwoResults.get(0), 4, roundTwoResults.get(1), 4);
+
+        //Inverse initial permutation table representation
+        Integer[] inverseInitialPermutation = {4, 1, 3, 5, 7, 2, 8, 6};
+        List<Integer> inverInitPerm = Arrays.asList(inverseInitialPermutation);
+
+        //Doing the inverse initial permutation
+        BitSet answer = permutation(toBeInversePermuted, inverInitPerm);
+
+        //Converting the answer BitSet to a string for convenience
+        String answerString = "";
+        for(int i = 0; i < 8; i++){
+            if(answer.get(i) == true){
+                answerString = answerString + "1";
+            }
+            if(answer.get(i) == false){
+                answerString = answerString + "0";
+            }
+        }
+
+        int byteAnswer = Integer.parseInt(answerString, 2);
+
+        if(verboseTest && isEncryptionMode){
+            System.out.println("Encryption was used on input " + input + "\n" +
+                               "and has given the output " + byteAnswer + " aka " + Integer.toBinaryString(byteAnswer) + "\n\n");
+        }
+        if(verboseTest && !isEncryptionMode){
+            System.out.println("Decryption was used on input " + input + "\n" +
+                               "and has given the output " + byteAnswer + " aka " + Integer.toBinaryString(byteAnswer) + "\n\n");
+        }
+
+        return byteAnswer;
+    }
 
 }
 
@@ -204,27 +417,23 @@ public class Main {
 
     public static void main(String[] args) {
 
-        BitSet key = new BitSet(10);
-        key.set(4);
-        key.set(8);
-        key.set(2);
-
-        BitSet test = new BitSet(8);
-        test.set(0);
-        test.set(3);
-        test.set(6);
-
-        Integer[] table = {2, 6, 3, 1, 4, 8, 5, 7};
-        List<Integer> initialPermutation = Arrays.asList(table);
-
-        Integer[] inverseTable = {4, 1, 3, 5, 7, 2, 8, 6};
-        List<Integer> inversePermutation = Arrays.asList(inverseTable);
-
-        DES blockCypher = new DES(key, 10);
-        BitSet permuted = blockCypher.permutation(test, initialPermutation);
-        BitSet inversePermuted = blockCypher.permutation(permuted, inversePermutation);
+        DES blockCypher = new DES("0101000100");
+        int cyphertext = blockCypher.encryptAndDecrypt(Byte.valueOf("0001100",2), true);
+        blockCypher.encryptAndDecrypt(cyphertext, false);
 
         if(false) {
+
+            BitSet test = new BitSet(8); test.set(0); test.set(3); test.set(6);
+
+            Integer[] table = {2, 6, 3, 1, 4, 8, 5, 7};
+            List<Integer> initialPermutation = Arrays.asList(table);
+
+            Integer[] inverseTable = {4, 1, 3, 5, 7, 2, 8, 6};
+            List<Integer> inversePermutation = Arrays.asList(inverseTable);
+
+            BitSet permuted = blockCypher.permutation(test, initialPermutation);
+            BitSet inversePermuted = blockCypher.permutation(permuted, inversePermutation);
+
             System.out.println("The plaintext is " + test);
             System.out.println("The initial permutation is " + permuted);
             System.out.println("The permuted text inversed is " + inversePermuted);
@@ -237,6 +446,8 @@ public class Main {
               + "Rotated permuted is converted as " + blockCypher.BitsToInt(blockCypher.leftShiftRotation(permuted, 8), 8) + ".");
             System.out.println("Test and permuted appended is " + blockCypher.append(test, 8, permuted, 8));
             System.out.println("permuted and inversePermuted appended is " + blockCypher.append(permuted, 8, inversePermuted, 8));
+            System.out.println(Integer.toBinaryString(Byte.valueOf("1111111",2)));
+
         }
 
     }
