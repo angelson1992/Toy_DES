@@ -350,8 +350,9 @@ class DES {
         //Tranforming the Byte input into a BitSet input for conveniences sake
         BitSet inputBitSet = new BitSet();
         String inputString = Integer.toBinaryString(input);
-        for(int i = 0; i < inputString.length(); i++){
-            if(inputString.charAt(i)=='1'){inputBitSet.set(i, true);}else{inputBitSet.set(i, false);}
+
+        for(int i = inputString.length(); i > 0; i--){
+            if(inputString.charAt(i-1)=='1'){inputBitSet.set(inputString.length()-i, true);}else{inputBitSet.set(inputString.length()-i, false);}
         }
 
         //Initial permutation table representation
@@ -388,11 +389,11 @@ class DES {
 
         //Converting the answer BitSet to a string for convenience
         String answerString = "";
-        for(int i = 0; i < 8; i++){
-            if(answer.get(i) == true){
+        for(int i = 8; i > 0; i--){
+            if(answer.get(i-1) == true){
                 answerString = answerString + "1";
             }
-            if(answer.get(i) == false){
+            if(answer.get(i-1) == false){
                 answerString = answerString + "0";
             }
         }
@@ -418,7 +419,7 @@ public class Main {
     public static void main(String[] args) {
 
         DES blockCypher = new DES("0101000100");
-        int cyphertext = blockCypher.encryptAndDecrypt(Byte.valueOf("0001100",2), true);
+        int cyphertext = blockCypher.encryptAndDecrypt(Byte.valueOf("011111",2), true);
         blockCypher.encryptAndDecrypt(cyphertext, false);
 
         if(false) {
